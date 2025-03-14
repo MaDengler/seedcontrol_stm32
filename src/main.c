@@ -1,7 +1,7 @@
 #include "stm32f4xx.h"
 
 void delay_ms(uint32_t ms){
-    for(uint32_t i=0; i < ms * 4; i++){
+    for(uint32_t i=0; i < ms * 100; i++){
         __asm__("nop");
     }
 }
