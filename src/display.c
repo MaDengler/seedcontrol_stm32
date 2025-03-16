@@ -172,22 +172,24 @@ void draw_wheel(bool wheel){
 }
 
 void write_data(const char data){
-	GPIOB->ODR |= GPIO_ODR_OD11;					//Set PORTB11 high to transmit data
+	GPIOB->ODR |= GPIO_ODR_OD2;					//Set PORTB11 high to transmit data
 	SPI2->DR = data;
-	while(!(SPI2->SR & SPI_SR_TXE)){;}	
+	delay_ms(1);
+	//while(!(SPI2->SR & SPI_SR_TXE)){;}	
 }
 
 void write_cmd(char data){
-	GPIOB->ODR &= ~GPIO_ODR_OD11;					//Set PORTB11 low to transmit data	
+	GPIOB->ODR &= ~GPIO_ODR_OD2;					//Set PORTB11 low to transmit data	
 	SPI2->DR = data;
-	while(!(SPI2->SR & SPI_SR_TXE)){;}
+	delay_ms(1);
+	//while(!(SPI2->SR & SPI_SR_TXE)){;}
 }
 
 void init_display(){
 	/**********Initialization for SPI communication**********/
-	//Configure PORTB Pin 11 (Reset) PORTB Pin10 (data/cmd-switch) as output
-	GPIOB->MODER &= ~(GPIO_MODER_MODER10|GPIO_MODER_MODER11);
-	GPIOB->MODER |= GPIO_MODER_MODER10_0|GPIO_MODER_MODER11_0;
+	//Configure PORTB Pin 10 (Reset) PORTB Pin11 (data/cmd-switch) as output
+	GPIOB->MODER &= ~(GPIO_MODER_MODER10|GPIO_MODER_MODER2);
+	GPIOB->MODER |= GPIO_MODER_MODER10_0|GPIO_MODER_MODER2_0;
 	//Enable Clocks for SPI and GPIOB
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;

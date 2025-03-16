@@ -106,10 +106,21 @@ void draw_all(struct Results* res){
 }
 */
 int main(){
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+    GPIOC->MODER &= ~(3 << (13*2));
+    GPIOC->MODER |= GPIO_MODER_MODE13_0;//(1 << (13*2));
+    GPIOC->OTYPER &= ~GPIO_OTYPER_OT13;
+    GPIOC->PUPDR &= ~GPIO_PUPDR_PUPDR13;
+
     DWT_Delay_init();
 	init_display();
 
 	while(1){
+		GPIOC->ODR = (1 << 13);
+        delay_ms(1000);
+        GPIOC->ODR = ~(1 << 13);
+        delay_ms(1000);
+
 		draw_fanSymbol(true);
 		delay_ms(500);
 		draw_fanSymbol(false);
