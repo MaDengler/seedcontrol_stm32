@@ -2,16 +2,17 @@
 
 #include <stdbool.h>
 
+
 #include "symbols.h"
 #include "display.h"
 #include "delay.h"
 
 
 void draw_speed(float val){
-	char d1;
-	char d2;
-	char d3;	
-	int tmp_val=(int)(val*10);
+	uint8_t d1;
+	uint8_t d2;
+	uint8_t d3;	
+	uint32_t tmp_val=(uint32_t)(val*10);
 	
 	d3 = tmp_val%10;		
 	tmp_val/=10;
@@ -30,12 +31,12 @@ void draw_speed(float val){
 	draw_symbol(&symbolKMH);
 }
 
-void draw_fanSpeed(int val){
-	char d1;
-	char d2;
-	char d3;	
-	char d4;
-	int tmp_val=val;
+void draw_fanSpeed(uint32_t val){
+	uint8_t d1;
+	uint8_t d2;
+	uint8_t d3;	
+	uint8_t d4;
+	uint32_t tmp_val=val;
 	d4 = tmp_val%10;	
 	tmp_val/=10;	
 	d3 = tmp_val%10;
@@ -65,10 +66,10 @@ void draw_fanSpeed(int val){
 }
 
 void draw_area(float val){
-	char d1;
-	char d2;
-	char d3;	
-	int tmp_val=(int)(val*10);
+	uint8_t d1;
+	uint8_t d2;
+	uint8_t d3;	
+	uint32_t tmp_val=(uint32_t)(val*10);
 	
 	d3 = tmp_val%10;		
 	tmp_val/=10;
@@ -87,12 +88,12 @@ void draw_area(float val){
 	draw_symbol(&symbolHa);
 }
 
-void draw_areaTotal(int val){
-	char d1;
-	char d2;
-	char d3;	
-	char d4;
-	int tmp_val=val;
+void draw_areaTotal(uint32_t val){
+	uint8_t d1;
+	uint8_t d2;
+	uint8_t d3;	
+	uint8_t d4;
+	uint32_t tmp_val=val;
 	d4 = tmp_val%10;	
 	tmp_val/=10;	
 	d3 = tmp_val%10;
@@ -171,28 +172,30 @@ void draw_wheel(bool wheel){
 
 }
 
-void write_data(const char data){
+void write_data(const uint8_t data){
 	GPIOB->ODR |= GPIO_ODR_OD2;					//Set PORTB11 high to transmit data
-	delay_us(2200);
+	while(!(SPI2->SR & SPI_SR_TXE)){;}
 	SPI2->DR = data;	
-	//while(!(SPI2->SR & SPI_SR_TXE)){;}
+	while((SPI2->SR & SPI_SR_BSY)){;}
 }
 
-void write_cmd(char data){
-	GPIOB->ODR &= ~GPIO_ODR_OD2;					//Set PORTB11 low to transmit data	
-	delay_us(2200);
+void write_cmd(uint8_t data){
+	GPIOB->ODR &= ~GPIO_ODR_OD2;				//Set PORTB11 low to transmit data	
+	//delay_ms(10);					
+	while(!(SPI2->SR & SPI_SR_TXE)){;}
 	SPI2->DR = data;
-	//while(!(SPI2->SR & SPI_SR_TXE)){;}
+	while(!(SPI2->SR & SPI_SR_BSY)){;}
 }
 
 void init_display(){
 	/**********Initialization for SPI communication**********/
+	//Enable Clocks for SPI and GPIOB
+	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;	
 	//Configure PORTB Pin 10 (Reset) PORTB Pin11 (data/cmd-switch) as output
 	GPIOB->MODER &= ~(GPIO_MODER_MODER10|GPIO_MODER_MODER2);
 	GPIOB->MODER |= GPIO_MODER_MODER10_0|GPIO_MODER_MODER2_0;
-	//Enable Clocks for SPI and GPIOB
-	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+
 	//Configure GPIO registers for SPI communication (SPI2)
 	GPIOB->MODER &= ~(GPIO_MODER_MODER12|GPIO_MODER_MODER13|GPIO_MODER_MODER14|GPIO_MODER_MODER15);
 	GPIOB->MODER |= GPIO_MODER_MODER12_1|GPIO_MODER_MODER13_1|GPIO_MODER_MODER14_1|GPIO_MODER_MODER15_1;		
@@ -201,22 +204,31 @@ void init_display(){
 	GPIOB->AFR[1] |= (GPIO_AFRH_AFSEL12_0|GPIO_AFRH_AFSEL12_2)|(GPIO_AFRH_AFSEL13_0|GPIO_AFRH_AFSEL13_2)|(GPIO_AFRH_AFSEL14_0|GPIO_AFRH_AFSEL14_2)|(GPIO_AFRH_AFSEL15_0|GPIO_AFRH_AFSEL15_2);
 	//Configure SPI2
 	SPI2->CR1 = 0;
-	SPI2->CR1 |= SPI_CR1_MSTR|SPI_CR1_BR_1|SPI_CR1_SPE|SPI_CR1_SSI|SPI_CR1_SSM;
+	SPI2->CR1 |= SPI_CR1_MSTR|SPI_CR1_SSI|SPI_CR1_SSM|SPI_CR1_CPHA|SPI_CR1_CPOL;
+	//SPI2->CR1 &= ~(SPI_CR1_CPHA|SPI_CR1_CPOL|SPI_CR1_BR_0|SPI_CR1_BR_1|SPI_CR1_BR_2);
 	SPI2->CR2 = 0;
 	SPI2->CR2 |= SPI_CR2_SSOE;
-	SPI2->CR2 &= ~(SPI_CR2_TXEIE|SPI_CR2_RXNEIE);
+	//SPI2->CR2 &= ~(SPI_CR2_TXEIE|SPI_CR2_RXNEIE);
+	SPI2->CR1 |= SPI_CR1_SPE;
 	
 
 	GPIOB->ODR &= ~GPIO_ODR_OD10;										//reset display
 	delay_ms(100);
 	GPIOB->ODR |= GPIO_ODR_OD10;
+	delay_ms(1);
 
 	write_cmd(0xa4);
+	delay_ms(1);
 	write_cmd(0xa6);
+	delay_ms(1);
 	write_cmd(0xaf);
+	delay_ms(1);
 	write_cmd(0xfd);
-	write_cmd(0x12);		
+	delay_ms(1);
+	write_cmd(0x12);
+	delay_ms(1);
 	write_cmd(0x20);  //Addressing mode: 0x00=horizontal
+	delay_ms(1);
 	write_cmd(0x01);
 	
 	clear_display();
@@ -231,12 +243,12 @@ void clear_display(){
 	write_cmd(0x00);		
 	write_cmd(0x07);
 
-	for(int i=0; i<8*128; i++){
+	for(uint32_t i=0; i<8*128; i++){
 		write_data(0x00);	
 	}
 }
 
-void set_position(char PageStart, char PageEnd, char ColStart){
+void set_position(uint8_t PageStart, uint8_t PageEnd, uint8_t ColStart){
 	write_cmd(0x21);
 	write_cmd(ColStart);
 	write_cmd(127);
@@ -245,7 +257,7 @@ void set_position(char PageStart, char PageEnd, char ColStart){
 	write_cmd(PageEnd);
 }
 
-const struct Symbol* select_digit(char digit){
+const struct Symbol* select_digit(uint8_t digit){
 	switch(digit){
 		case 0: return &digit0;break;
 		case 1: return &digit1;break;
@@ -262,7 +274,7 @@ const struct Symbol* select_digit(char digit){
 }
 
 void draw_symbol(const struct Symbol* symbol){
-	for(int i=0; i<symbol->size; i++)//
+	for(uint32_t i=0; i<symbol->size; i++)//
 		write_data(symbol->pixels[i]);
 }
 

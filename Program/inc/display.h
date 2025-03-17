@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 
 
 #define PAGESTART_TOP 0
@@ -21,22 +22,22 @@
 #define COLSTART_FANSYMB 104
 
 
-void write_data(const char);
-void write_cmd(char);
+void write_data(const uint8_t);
+void write_cmd(uint8_t);
 
 void init_display();
 void draw_all();
 void clear_display();
 void lock_display(bool);
 
-const struct Symbol* select_digit(char);
+const struct Symbol* select_digit(uint8_t);
 void draw_symbol(const struct Symbol*);
-void set_position(char, char,char);
+void set_position(uint8_t, uint8_t,uint8_t);
 
 void draw_speed(float);
-void draw_fanSpeed(int);
+void draw_fanSpeed(uint32_t);
 void draw_area(float);
-void draw_areaTotal(int);
+void draw_areaTotal(uint32_t);
 void draw_fanSymbol(bool);
 void draw_Seeder1Symbol(bool);
 void draw_Seeder2Symbol(bool);

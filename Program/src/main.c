@@ -54,7 +54,7 @@ ISR(INT1_vect){
 
 struct Results res;
 
-void alarm(unsigned char state){
+void alarm(unsigned uint8_t state){
 	switch(state){
 	case 0: 	
 		PORTE &= ~(1<<PE2);
@@ -105,28 +105,42 @@ void draw_all(struct Results* res){
 	prevRes = *res;
 }
 */
-int main(){
-	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-    //GPIOC->MODER &= ~(3 << (13*2));
-    //GPIOC->MODER |= GPIO_MODER_MODE13_0;//(1 << (13*2));
-    //GPIOC->OTYPER &= ~GPIO_OTYPER_OT13;
-    //GPIOC->PUPDR &= ~GPIO_PUPDR_PUPDR13;
+void delay(){
+	for(int i=0;i<160000; i++);
+}
 
+int main(){
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+    GPIOC->MODER &= ~(3 << (13*2));
+    GPIOC->MODER |= GPIO_MODER_MODE13_0;//(1 << (13*2));
+    GPIOC->OTYPER &= ~GPIO_OTYPER_OT13;
+    GPIOC->PUPDR &= ~GPIO_PUPDR_PUPDR13;
+	__disable_irq();
     DWT_Delay_init();
-	delay_ms(100);
+	//delay_ms(100);
 	init_display();
-	delay_ms(100);
+	//delay_ms(100);
 	while(1){
+		//GPIOB->ODR &= ~GPIO_ODR_OD10;										//reset display
+		for(int i=0;i<16000; i++);
+		delay_ms(100);
+		GPIOB->ODR |= GPIO_ODR_OD10;
 		//init_display();
-		//GPIOC->ODR = (1 << 13);
-        //delay_ms(1000);
-        //GPIOC->ODR = ~(1 << 13);
-        //delay_ms(1000);
+		GPIOC->ODR = (1 << 13);
+		//delay();
+        delay_ms(1000);
+        GPIOC->ODR = ~(1 << 13);
+		//delay();
+        delay_ms(1000);
 
 		draw_fanSymbol(true);
-		delay_ms(500);
+		delay_ms(100);	
+		draw_area(25);
+		delay_ms(1000);
 		draw_fanSymbol(false);
-		delay_ms(250);
+		delay_ms(1000);	
+		draw_area(1);
+		delay_ms(100);		
 	}
 /*
 	DDRE = (1<<PE2);
@@ -137,7 +151,7 @@ int main(){
 	MCUCR = (0<<ISC10)|(1<<ISC11);
 	GICR =(1<<INT1);
 
-	unsigned char alarmState = 0;
+	unsigned uint8_t alarmState = 0;
 
 	init_display();
 	init_measuring();

@@ -22,8 +22,8 @@ CC = arm-none-eabi-gcc
 AS = arm-none-eabi-as
 
 ASFLAGS = -mcpu=cortex-m4 -mthumb
-CFLAGS = -mcpu=cortex-m4 -mthumb -D$(DEVICE) -Wall -Wextra -Werror -ffreestanding -lc -lm -I$(INC_CMSIS) -I$(INC_CMSIS_DEVICE_F4) -I$(INC)
-LDFLAGS = -mcpu=cortex-m4 -mthumb -Tdevice/linker/STM32F401CC_FLASH.ld -specs=nosys.specs 
+CFLAGS = -mcpu=cortex-m4 -mthumb -D$(DEVICE) -Wall -Wextra -Werror -ffreestanding -lc -lm -I$(INC_CMSIS) -I$(INC_CMSIS_DEVICE_F4) -I$(INC) #-g -Og
+LDFLAGS = -mcpu=cortex-m4 -mthumb -Tdevice/linker/STM32F401CC_FLASH.ld -specs=nosys.specs #-g -Og
 
 all: $(TARGET)
 
