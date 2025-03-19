@@ -115,11 +115,11 @@ int main(){
     GPIOC->MODER |= GPIO_MODER_MODE13_0;//(1 << (13*2));
     GPIOC->OTYPER &= ~GPIO_OTYPER_OT13;
     GPIOC->PUPDR &= ~GPIO_PUPDR_PUPDR13;
-	__disable_irq();
+
     DWT_Delay_init();
-	//delay_ms(100);
+
 	init_display();
-	//delay_ms(100);
+
 	while(1){
 		//GPIOB->ODR &= ~GPIO_ODR_OD10;										//reset display
 		for(int i=0;i<16000; i++);
@@ -131,16 +131,36 @@ int main(){
         delay_ms(1000);
         GPIOC->ODR = ~(1 << 13);
 		//delay();
+		draw_fanSymbol(false);
+		draw_Seeder1Symbol(false);
+		draw_Seeder2Symbol(false);
+		draw_Seeder3Symbol(false);
+		draw_Seeder4Symbol(false);
+		draw_wheel(false);
         delay_ms(1000);
 
 		draw_fanSymbol(true);
-		delay_ms(100);	
-		draw_area(25);
-		delay_ms(1000);
-		draw_fanSymbol(false);
-		delay_ms(1000);	
-		draw_area(1);
-		delay_ms(100);		
+		draw_Seeder1Symbol(true);
+		draw_Seeder2Symbol(true);
+		draw_Seeder3Symbol(true);
+		draw_Seeder4Symbol(true);
+		draw_wheel(true);
+		for(int i=0; i<1010; i++){
+			draw_fanSpeed(i);
+			delay_ms(10);
+		}
+		for(int i=0; i<1010; i++){
+			draw_speed((float)(i/10.0));
+			delay_ms(10);
+		}	
+		for(int i=0; i<1010; i++){
+			draw_area((float)(i/10.0));
+			delay_ms(10);
+		}	
+		for(int i=0; i<1010; i++){
+			draw_areaTotal(i);
+			delay_ms(10);
+		}	
 	}
 /*
 	DDRE = (1<<PE2);
