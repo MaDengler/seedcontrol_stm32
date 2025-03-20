@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-
 #include "symbols.h"
 #include "display.h"
 #include "delay.h"
@@ -173,15 +172,14 @@ void draw_wheel(bool wheel){
 }
 
 void write_data(const uint8_t data){
-	GPIOB->ODR |= GPIO_ODR_OD2;					//Set PORTB11 high to transmit data
+	GPIOB->ODR |= GPIO_ODR_OD2;					//Set PORTB11 high to transmit data	
 	while(!(SPI2->SR & SPI_SR_TXE)){;}
 	SPI2->DR = data;	
 	while((SPI2->SR & SPI_SR_BSY)){;}
 }
 
 void write_cmd(uint8_t data){
-	GPIOB->ODR &= ~GPIO_ODR_OD2;				//Set PORTB11 low to transmit data	
-	//delay_ms(10);					
+	GPIOB->ODR &= ~GPIO_ODR_OD2;				//Set PORTB11 low to transmit data						
 	while(!(SPI2->SR & SPI_SR_TXE)){;}
 	SPI2->DR = data;
 	while(!(SPI2->SR & SPI_SR_BSY)){;}
@@ -204,8 +202,8 @@ void init_display(){
 	GPIOB->AFR[1] |= (GPIO_AFRH_AFSEL12_0|GPIO_AFRH_AFSEL12_2)|(GPIO_AFRH_AFSEL13_0|GPIO_AFRH_AFSEL13_2)|(GPIO_AFRH_AFSEL14_0|GPIO_AFRH_AFSEL14_2)|(GPIO_AFRH_AFSEL15_0|GPIO_AFRH_AFSEL15_2);
 	//Configure SPI2
 	SPI2->CR1 = 0;
-	SPI2->CR1 |= SPI_CR1_MSTR|SPI_CR1_SSI|SPI_CR1_BR_0|SPI_CR1_SSM|SPI_CR1_CPHA|SPI_CR1_CPOL;
-	//SPI2->CR1 &= ~(SPI_CR1_CPHA|SPI_CR1_CPOL|SPI_CR1_BR_0|SPI_CR1_BR_1|SPI_CR1_BR_2);
+	SPI2->CR1 |= SPI_CR1_MSTR|SPI_CR1_SSI|SPI_CR1_BR_0|SPI_CR1_SSM|SPI_CR1_CPHA|SPI_CR1_CPOL; //Baudrate Bit SPI_CR1_BR0 1 others 0 
+	//SPI2->CR1 &= ~(SPI_CR1_CPHA|SPI_CR1_CPOLSPI_CR1_BR_0|SPI_CR1_BR_1|SPI_CR1_BR_2);
 	SPI2->CR2 = 0;
 	SPI2->CR2 |= SPI_CR2_SSOE;
 	//SPI2->CR2 &= ~(SPI_CR2_TXEIE|SPI_CR2_RXNEIE);

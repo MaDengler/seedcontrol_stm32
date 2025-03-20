@@ -1,113 +1,12 @@
 #include "stm32f4xx.h"
 
 #include "delay.h"
-
 #include "symbols.h"
 #include "display.h"
+#include "measurement.h"
+#include "status.h"
 
-//#include "counter.h"
-//#include "measurement.h"
-//#include "UART_debug.h"
-/*
-#define ONE_SEC 7812
-
-bool btn_press = false;
-bool btn_longpress = false;
-
-ISR(INT1_vect){
-	static bool falling_edge = true;
-	static unsigned int t1 = 0; 
-	delay_ms(80);
-
-	if(falling_edge){	
-		MCUCR |= (1<<ISC10);
-		falling_edge = false;
-		t1 = TCNT1;
-		GIFR = 0b10000000;
-
-	}
-	else{
-		unsigned int delta_t;
-		unsigned int t2 = TCNT1;
-		MCUCR &= ~(1<<ISC10);
-		falling_edge = true;
-		if(t1 < t2){
-        	delta_t = t2 - t1;
-    	}
-    	else{
-    	    delta_t = t1 - t2;
-    	}
-
-		if(delta_t >= ONE_SEC * 3){
-			btn_longpress = true;
-		}
-		else if((delta_t > ONE_SEC / 4) && (delta_t < ONE_SEC *3)){
-			if(btn_press){
-				btn_press = false;
-			}
-			else{
-				btn_press = true;
-			}
-		}		
-	}
-}
-
-struct Results res;
-
-void alarm(unsigned uint8_t state){
-	switch(state){
-	case 0: 	
-		PORTE &= ~(1<<PE2);
-		PORTA &= ~(1<<PA7);
-		PORTA |= (1<<PA6);
-		break;
-	case 1: 	
-		PORTE |= (1<<PE2);
-		PORTA |= (1<<PA7);
-		PORTA &= ~(1<<PA6);
-		break;
-
-	case 2: 	
-		PORTE &= ~(1<<PE2);
-		PORTA |= (1<<PA7);
-		PORTA &= ~(1<<PA6);
-		break;
-	default:
-		break;
-	}
-}
-
-void draw_all(struct Results* res){
-	static struct Results prevRes = {1,1,1,0xff};
-
-	if(res->speed != prevRes.speed)
-		draw_speed(res->speed);
-	if(res->currentArea != prevRes.currentArea)
-		draw_area(res->currentArea);
-	if(res->totalArea != prevRes.totalArea)
-		draw_areaTotal(res->totalArea);
-	if(res->fanSpeed != prevRes.fanSpeed)
-		draw_fanSpeed(res->fanSpeed);
-
-	if(res->fanRotating != prevRes.fanRotating)
-		draw_fanSymbol(res->fanRotating);
-	if(res->wheelRotating != prevRes.wheelRotating)
-		draw_wheel(res->wheelRotating);
-	if(res->seederStates[0] != prevRes.seederStates[0])
-		draw_Seeder1Symbol(res->seederStates[0]);
-	if(res->seederStates[1] != prevRes.seederStates[1])
-		draw_Seeder2Symbol(res->seederStates[1]);
-	if(res->seederStates[2] != prevRes.seederStates[2])
-		draw_Seeder3Symbol(res->seederStates[2]);
-	if(res->seederStates[3] != prevRes.seederStates[3])
-		draw_Seeder4Symbol(res->seederStates[3]);
-
-	prevRes = *res;
-}
-*/
-void delay(){
-	for(int i=0;i<160000; i++);
-}
+struct Status state;
 
 int main(){
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
@@ -119,7 +18,7 @@ int main(){
     DWT_Delay_init();
 
 	init_display();
-
+	init_measuring();
 	while(1){
 		//GPIOB->ODR &= ~GPIO_ODR_OD10;										//reset display
 		for(int i=0;i<16000; i++);
