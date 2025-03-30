@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "Regulator_Switching_custom")(type "KiCad")(uri "${KIPRJMOD}/Regulator_Switching_custom.kicad_sym")(options "")(descr ""))
+  (lib (name "Device_custom")(type "KiCad")(uri "${KIPRJMOD}/Device_custom.kicad_sym")(options "")(descr ""))
+)
