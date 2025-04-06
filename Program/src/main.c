@@ -3,10 +3,9 @@
 #include "delay.h"
 #include "symbols.h"
 #include "display.h"
-#include "measurement.h"
-#include "status.h"
+#include "state.h"
 
-struct Status state;
+struct State state;
 
 int main(){
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
@@ -31,11 +30,11 @@ int main(){
         GPIOC->ODR = ~(1 << 13);
 		//delay();
 		draw_fanSymbol(false);
-		draw_Seeder1Symbol(false);
-		draw_Seeder2Symbol(false);
-		draw_Seeder3Symbol(false);
-		draw_Seeder4Symbol(false);
-		draw_wheel(false);
+		draw_Seeder1Symbol(state.seederState1[0]);
+		draw_Seeder2Symbol(state.seederState2[0]);
+		draw_Seeder3Symbol(state.seederState3[0]);
+		draw_Seeder4Symbol(state.seederState4[0]);
+		draw_wheel(state.wheelRotating);
         delay_ms(1000);
 
 		draw_fanSymbol(true);

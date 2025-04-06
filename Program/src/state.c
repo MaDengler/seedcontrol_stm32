@@ -1,28 +1,45 @@
 #include "stm32f4xx.h"
-#include "measurement.h"
-#include "display.h"
 
+#include "display.h"
+#include "state.h"
+
+#define N_ALARM_DELAY 2
+extern struct State state;
 
 void EXTI0_IRQHandler(void){
-    clear_display();
+    state.wheelRotating = true;
+    for(int8_t i=0;i<=N_ALARM_DELAY;i++){
+        state.seederState1[i] = state.seederState1[i+1];
+        state.seederState2[i] = state.seederState2[i+1];
+        state.seederState3[i] = state.seederState3[i+1];
+        state.seederState4[i] = state.seederState4[i+1];
+    }
+    state.seederState1[N_ALARM_DELAY] = false;
+    state.seederState2[N_ALARM_DELAY] = false;
+    state.seederState3[N_ALARM_DELAY] = false;
+    state.seederState4[N_ALARM_DELAY] = false;
     EXTI->PR |= EXTI_PR_PR0;
 }
 void EXTI1_IRQHandler(void){
-    clear_display();
+    state.seederState1[2] = true;
     EXTI->PR |= EXTI_PR_PR0;
 }
 void EXTI2_IRQHandler(void){
-  clear_display();
-  EXTI->PR |= EXTI_PR_PR0;
+    state.seederState2[2] = true;
+    EXTI->PR |= EXTI_PR_PR0;
 }
 void EXTI3_IRQHandler(void){
-  clear_display();
-  EXTI->PR |= EXTI_PR_PR0;
+    state.seederState3[2] = true;
+    EXTI->PR |= EXTI_PR_PR0;
 }
 void EXTI4_IRQHandler(void){
-  clear_display();
-  EXTI->PR |= EXTI_PR_PR0;
+    state.seederState4[2] = true;
+    EXTI->PR |= EXTI_PR_PR0;
 }
+
+//Timer to reset the states after wheel stopped rotating
+/*TODO: Maybe set seederstates to false,true,true to turn display symbols on faster
+Time to reset should be roughly 2800ms*/
 
 
 void init_measuring(){
@@ -46,7 +63,10 @@ void init_measuring(){
     NVIC_EnableIRQ(EXTI2_IRQn);
     NVIC_EnableIRQ(EXTI3_IRQn);
     NVIC_EnableIRQ(EXTI4_IRQn);
-  /*  
+  
+    //Configure timer TIM for Measuring Fanspeed
+    
+    /*  
     
     DDRA |= (1<<PA0)|(1<<PA1)|(1<<PA2)|(1<<PA3);
 
