@@ -1,7 +1,10 @@
+#ifndef STATE_H
+#define STATE_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
-struct State{
+typedef struct{
     float currentArea;
     uint16_t totalArea;
     float speed;
@@ -14,6 +17,17 @@ struct State{
 	bool fanRotating;
     bool alarm;
     bool alarm_ignore;
-};
+} State;
+
+typedef struct{
+    uint32_t c_wheel;
+    uint32_t c_fan;
+    uint32_t n_wheel;
+    uint32_t n_wheel_current;
+} Measurement;
 
 void init_measuring();
+void update_state();
+
+
+#endif

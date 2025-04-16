@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "state.h"
 
 #define PAGESTART_TOP 0
 #define PAGEEND_TOP 1
@@ -26,7 +27,7 @@ void write_data(const uint8_t);
 void write_cmd(uint8_t);
 
 void init_display();
-void draw_all();
+void draw_state();
 void clear_display();
 void lock_display(bool);
 
