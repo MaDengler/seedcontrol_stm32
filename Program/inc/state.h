@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 typedef struct{
-    float currentArea;
+    float tmpArea;
     uint16_t totalArea;
     float speed;
     uint16_t fanSpeed;
@@ -23,7 +23,7 @@ typedef struct{
     uint32_t c_wheel;
     uint32_t c_fan;
     uint32_t n_wheel;
-    uint32_t n_wheel_current;
+    uint32_t n_wheel_tmp;
 } Measurement;
 
 void init_measuring();

@@ -28,8 +28,10 @@ int main(){
     DWT_Delay_init();
 	init_display();
 	init_measuring();
+	persistance_init();
 	//flash_unlock();
     //flash_erase_sector5();
+	//flash_lock();
 
 	while(1){
 		GPIOA->ODR &= ~(GPIO_ODR_OD6 | GPIO_ODR_OD7);

@@ -292,7 +292,7 @@ void lock_display(bool locked){
 
 void draw_state(){
 	draw_areaTotal(state.totalArea);
-	draw_area(state.currentArea);
+	draw_area(state.tmpArea);
 	draw_fanSpeed(state.fanSpeed);
 	draw_speed(state.speed);
 	draw_wheel(state.wheelRotating);

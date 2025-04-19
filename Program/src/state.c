@@ -18,7 +18,7 @@ Measurement meas;
 void EXTI0_IRQHandler(void){
     if(TIM3->CNT > 400*MilliSECOND || TIM3->CNT == 0){
         state.wheelRotating = true;
-        meas.n_wheel_current++;
+        meas.n_wheel_tmp++;
         for(int8_t i=0;i<N_ALARM_DELAY;i++){
             state.seederState1[i] = state.seederState1[i+1];
             state.seederState2[i] = state.seederState2[i+1];
@@ -148,7 +148,8 @@ void init_measuring(){
     NVIC_EnableIRQ(TIM4_IRQn);
 
     //Load persisted area from flash memory
-    meas.n_wheel = flash_read_word();
+    meas.n_wheel = get_counter();
+    meas.n_wheel_tmp = get_tmp_counter();
 }
 
 void update_state(){
@@ -164,12 +165,14 @@ void update_state(){
     else{
         state.fanSpeed = 0;
     }
-    state.currentArea = meas.n_wheel_current * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
+    state.tmpArea = meas.n_wheel_tmp * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
     state.totalArea = meas.n_wheel * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
-    if(meas.n_wheel_current % 50 == 0 && meas.n_wheel_current != 0){
-        
-        flash_write_word(meas.n_wheel + 49);
-        meas.n_wheel += 49;
-        meas.n_wheel_current++;
+    if(meas.n_wheel_tmp % 10 == 0 && meas.n_wheel_tmp != 0){
+        if(get_tmp_counter() != meas.n_wheel_tmp){
+            //persist_tmp_counter(meas.n_wheel_tmp);
+        }
+        if(get_counter() != meas.n_wheel_tmp){
+            //persist_counter(meas.n_wheel);
+        }        
     }
 }
