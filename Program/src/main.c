@@ -16,6 +16,25 @@ void HardFault_Handler(void){
 		delay_ms(1000);
 	}
 }
+
+void alarm(bool alarm){
+	if(alarm){
+		GPIOA->ODR &= ~(GPIO_ODR_OD7);
+		GPIOA->ODR &= ~(GPIO_ODR_OD6);
+		delay_ms(500);
+		GPIOA->ODR |= GPIO_ODR_OD6;
+		delay_ms(500);
+	}
+	else{
+		GPIOA->ODR |= GPIO_ODR_OD7;
+		GPIOA->ODR &= ~(GPIO_ODR_OD6);
+
+	}
+}
+
+
+
+
 int main(){
 	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     //GPIOC->MODER &= ~(3 << (13*2));
@@ -32,10 +51,7 @@ int main(){
     //flash_erase_sector5();
 
 	while(1){
-		GPIOA->ODR &= ~(GPIO_ODR_OD6 | GPIO_ODR_OD7);
-		delay_ms(100);
-		GPIOA->ODR |= GPIO_ODR_OD6 | GPIO_ODR_OD7;
-		delay_ms(100);
+		alarm(state.wheelRotating && !(state.seederState1[0]&&state.seederState2[0]&&state.seederState3[0]&&state.seederState4[0]));
 
 		update_state();
 		draw_state();
