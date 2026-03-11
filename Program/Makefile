@@ -26,6 +26,8 @@ CFLAGS = -mcpu=cortex-m4 -mthumb -D$(DEVICE) -Wall -Wextra -Werror -ffreestandin
 LDFLAGS = -mcpu=cortex-m4 -mthumb -Tdevice/linker/STM32F401CC_FLASH.ld -specs=nosys.specs #-g -Og
 
 all: $(TARGET)
+	arm-none-eabi-objcopy -O binary $(TARGET) $(TARGET:.elf=.bin)
+
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
