@@ -190,7 +190,7 @@ void write_cmd(uint8_t data){
 	__enable_irq();
 }
 
-void init_display(){
+void display_init(){
 	/**********Initialization for SPI communication**********/
 	//Enable Clocks for SPI and GPIOB
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;

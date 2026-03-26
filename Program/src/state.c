@@ -90,7 +90,7 @@ void TIM4_IRQHandler(void){
 Time to reset should be roughly 2800ms*/
 
 
-void init_measuring(){
+void state_init(){
   
     //cli();
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -148,7 +148,8 @@ void init_measuring(){
     NVIC_EnableIRQ(TIM4_IRQn);
 
     //Load persisted area from flash memory
-    meas.n_wheel = flash_read_word();
+    meas.n_wheel = persist_read_total_count();
+    meas.n_wheel_current = persist_read_current_count();
 }
 
 void update_state(){
@@ -168,7 +169,7 @@ void update_state(){
     state.totalArea = meas.n_wheel * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
     if(meas.n_wheel_current % 50 == 0 && meas.n_wheel_current != 0){
         
-        flash_write_word(meas.n_wheel + 49);
+        persist_append(meas.n_wheel + 49, meas.n_wheel_current);
         meas.n_wheel += 49;
         meas.n_wheel_current++;
     }

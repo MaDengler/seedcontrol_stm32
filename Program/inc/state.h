@@ -26,7 +26,7 @@ typedef struct{
     uint32_t n_wheel_current;
 } Measurement;
 
-void init_measuring();
+void state_init();
 void update_state();
 
 

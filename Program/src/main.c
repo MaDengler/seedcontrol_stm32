@@ -33,8 +33,6 @@ void alarm(bool alarm){
 }
 
 
-
-
 int main(){
 	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     //GPIOC->MODER &= ~(3 << (13*2));
@@ -45,12 +43,13 @@ int main(){
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	GPIOA->MODER |= GPIO_MODER_MODER6_0|GPIO_MODER_MODER7_0|GPIO_MODER_MODER8_0;
     DWT_Delay_init();
-	init_display();
-	init_measuring();
-	//flash_unlock();
-    //flash_erase_sector5();
+	persist_init();
+	display_init();
+	state_init();
+
 
 	while(1){
+		//put that also in state and just deliver bool if alarm is on or off
 		alarm(state.wheelRotating && !(state.seederState1[0]&&state.seederState2[0]&&state.seederState3[0]&&state.seederState4[0]));
 
 		update_state();
