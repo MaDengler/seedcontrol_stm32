@@ -4,7 +4,7 @@
 
 #include "persist.h"
 
-static uint32_t addr_next_entry;
+static uint32_t addr_next_entry = ADDRESS_FLASH;
 
 typedef struct{
     uint32_t seq;
@@ -115,9 +115,4 @@ uint32_t persist_read_total_count(){
 
 uint32_t persist_read_current_count(){
     return entry_write_buffer.n_wheel_current;
-}
-
-void persist_clear_current_count(){
-    entry_write_buffer.n_wheel_current = 0;
-    persist_append(entry_write_buffer.n_wheel, entry_write_buffer.n_wheel_current);
 }

@@ -1,35 +1,40 @@
 #include "stm32f4xx.h"
 
 #include "display.h"
+#include "persist.h"
 #include "state.h"
 #include "delay.h"
-#include "persist.h"
 
-#define N_ALARM_DELAY 2
 #define MilliSECOND 16
 #define N_FANROT 5
 #define WHEEL_CIRCUMFERENCE 2.2
 #define WORKING_WIDTH 3.0
 #define T_RESET (2800 * MilliSECOND)
 
-extern State state;
-Measurement meas;
+State state = {0,0,0,0,{false,true,true},{false,true,true},{false,true,true},{false,true,true},false,false,false,false,false,3,0,0,0,0};
 
 void EXTI0_IRQHandler(void){
-    if(TIM3->CNT > 400*MilliSECOND || TIM3->CNT == 0){
+    if(TIM3->CNT > 40*MilliSECOND || TIM3->CNT == 0){
         state.wheelRotating = true;
-        meas.n_wheel_current++;
-        for(int8_t i=0;i<N_ALARM_DELAY;i++){
+        state.n_wheel++;
+        state.n_wheel_current++;
+        if(state.n_wheel_current % 50 == 0 && state.n_wheel_current != 0){ 
+            state.persist_needed = true;
+        }
+        for(int8_t i=0;i<2;i++){
             state.seederState1[i] = state.seederState1[i+1];
             state.seederState2[i] = state.seederState2[i+1];
             state.seederState3[i] = state.seederState3[i+1];
             state.seederState4[i] = state.seederState4[i+1];
         }
-        state.seederState1[N_ALARM_DELAY] = false;
-        state.seederState2[N_ALARM_DELAY] = false;
-        state.seederState3[N_ALARM_DELAY] = false;
-        state.seederState4[N_ALARM_DELAY] = false;
-        meas.c_wheel = TIM3->CNT;
+        state.seederState1[2] = false;
+        state.seederState2[2] = false;
+        state.seederState3[2] = false;
+        state.seederState4[2] = false;
+        if(state.alarm_prevent != 0){
+            state.alarm_prevent--;
+        }
+        state.c_wheel = TIM3->CNT;
         TIM3->CNT = 0;
         TIM3->CR1 |= TIM_CR1_CEN;
     }    
@@ -39,7 +44,7 @@ void EXTI1_IRQHandler(void){
     state.seederState1[2] = true;
     EXTI->PR |= EXTI_PR_PR1;
 }
-void EXTI2_IRQHandler(void){        //state.wheelRotating = !state.wheelRotating; //just for testing
+void EXTI2_IRQHandler(void){
     state.seederState2[2] = true;
     EXTI->PR |= EXTI_PR_PR2;
 }
@@ -55,11 +60,12 @@ void EXTI4_IRQHandler(void){
 void TIM3_IRQHandler(void){
     if(TIM3->SR & TIM_SR_UIF){
         state.wheelRotating = false;
-        state.seederState1[0] = false;
-        state.seederState2[0] = false;
-        state.seederState3[0] = false;
-        state.seederState4[0] = false;
-        meas.c_wheel = 0;
+        state.seederState1[0] = false; state.seederState1[1] = false; state.seederState1[2] = false;
+        state.seederState2[0] = false; state.seederState2[1] = false; state.seederState2[2] = false;
+        state.seederState3[0] = false; state.seederState3[1] = false; state.seederState3[2] = false;
+        state.seederState4[0] = false; state.seederState4[1] = false; state.seederState4[2] = false;
+        state.c_wheel = 0;
+        state.alarm_prevent = 3;
         TIM3->CR1 &= ~(TIM_CR1_CEN);
         TIM3->CNT = 0;
         TIM3->SR &= ~TIM_SR_UIF;
@@ -68,7 +74,7 @@ void TIM3_IRQHandler(void){
 
 void TIM2_IRQHandler(void){
     if(TIM2->SR & TIM_SR_UIF){
-        meas.c_fan = TIM4->CNT;
+        state.c_fan = TIM4->CNT;
         state.fanRotating = true;
         TIM4->CNT = 0;
         TIM4->CR1 |= TIM_CR1_CEN;
@@ -78,7 +84,7 @@ void TIM2_IRQHandler(void){
 
 void TIM4_IRQHandler(void){
     if(TIM4->SR & TIM_SR_UIF){
-        meas.c_fan = 0;
+        state.c_fan = 0;
         TIM4->CR1 &= ~(TIM_CR1_CEN);
         TIM4->CNT = 0;
         state.fanRotating = false;
@@ -86,8 +92,7 @@ void TIM4_IRQHandler(void){
     }
 }
 //Timer to reset the states after wheel stopped rotating
-/*TODO: Maybe set seederstates to false,true,true to turn display symbols on faster
-Time to reset should be roughly 2800ms*/
+//Time to reset should be roughly 2800ms
 
 
 void state_init(){
@@ -97,7 +102,7 @@ void state_init(){
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
     //PORTA0-5 as input
     GPIOA->MODER &= ~(GPIO_MODER_MODER0|GPIO_MODER_MODER1|GPIO_MODER_MODER2|GPIO_MODER_MODER3|GPIO_MODER_MODER4);
-    //Enable Pull-Down resistors
+    //Enable Pull-Up resistors
     GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR0|GPIO_PUPDR_PUPDR1|GPIO_PUPDR_PUPDR2|GPIO_PUPDR_PUPDR3|GPIO_PUPDR_PUPDR4|GPIO_PUPDR_PUPDR5);
     GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_0|GPIO_PUPDR_PUPDR1_0|GPIO_PUPDR_PUPDR2_0|GPIO_PUPDR_PUPDR3_0|GPIO_PUPDR_PUPDR4_0;
 
@@ -148,29 +153,67 @@ void state_init(){
     NVIC_EnableIRQ(TIM4_IRQn);
 
     //Load persisted area from flash memory
-    meas.n_wheel = persist_read_total_count();
-    meas.n_wheel_current = persist_read_current_count();
+    state.n_wheel = persist_read_total_count();
+    state.n_wheel_current = persist_read_current_count();
 }
 
 void update_state(){
-    if(state.wheelRotating && meas.c_wheel != 0){
-        state.speed = (WHEEL_CIRCUMFERENCE * MilliSECOND * 3600) / meas.c_wheel;
+    if(state.wheelRotating && state.c_wheel != 0){
+        state.speed = (WHEEL_CIRCUMFERENCE * MilliSECOND * 3600) / state.c_wheel;
     }
     else{
         state.speed = 0;
     }
-    if(state.fanRotating && meas.c_fan != 0){
-        state.fanSpeed = (N_FANROT * MilliSECOND * 60000) / meas.c_fan;
+    if(state.fanRotating && state.c_fan != 0){
+        state.fanSpeed = (N_FANROT * MilliSECOND * 60000) / state.c_fan;
     }
     else{
         state.fanSpeed = 0;
     }
-    state.currentArea = meas.n_wheel_current * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
-    state.totalArea = meas.n_wheel * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
-    if(meas.n_wheel_current % 50 == 0 && meas.n_wheel_current != 0){
-        
-        persist_append(meas.n_wheel + 49, meas.n_wheel_current);
-        meas.n_wheel += 49;
-        meas.n_wheel_current++;
+    state.currentArea = state.n_wheel_current * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
+    state.totalArea = state.n_wheel * WORKING_WIDTH * WHEEL_CIRCUMFERENCE / 10000;
+
+    bool seeder1_ok = state.seederState1[0] || state.seederState1[1] || state.seederState1[2];
+    bool seeder2_ok = state.seederState2[0] || state.seederState2[1] || state.seederState2[2];
+    bool seeder3_ok = state.seederState3[0] || state.seederState3[1] || state.seederState3[2];
+    bool seeder4_ok = state.seederState4[0] || state.seederState4[1] || state.seederState4[2];
+    bool all_seeders_ok = seeder1_ok && seeder2_ok && seeder3_ok && seeder4_ok;
+    if(state.wheelRotating && !all_seeders_ok && !state.alarm_prevent){
+        state.alarm = true;
+    }
+    if(state.wheelRotating && all_seeders_ok){
+        state.alarm = false;
+    }
+
+    if(!state.alarm){
+        state.alarm_silent = false;
     }
 }
+
+State state_get_state(){
+    __disable_irq();
+    State temp = state;
+    __enable_irq();
+    return temp;
+}
+
+void state_reset_persist_needed(){
+    __disable_irq();
+    state.persist_needed = false;
+    __enable_irq();
+}
+
+void state_clear_current_count(){
+    __disable_irq();
+    state.n_wheel_current = 0;
+    state.persist_needed = true;
+    __enable_irq();
+}
+
+void state_set_alarm_mute(bool mute){
+    __disable_irq();
+    state.alarm_silent = mute;
+    __enable_irq();
+}
+
+

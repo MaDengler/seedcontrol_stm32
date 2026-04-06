@@ -7,7 +7,6 @@
 #include "delay.h"
 #include "state.h"
 
-extern State state;
 
 void draw_speed(float val){
 	uint8_t d1;
@@ -186,7 +185,7 @@ void write_cmd(uint8_t data){
 	GPIOB->ODR &= ~GPIO_ODR_OD2;				//Set PORTB11 low to transmit data						
 	while(!(SPI2->SR & SPI_SR_TXE)){;}
 	SPI2->DR = data;
-	while(!(SPI2->SR & SPI_SR_BSY)){;}
+	while((SPI2->SR & SPI_SR_BSY)){;}
 	__enable_irq();
 }
 
@@ -290,15 +289,15 @@ void lock_display(bool locked){
 	}
 }
 
-void draw_state(){
+void draw_state(State state){
 	draw_areaTotal(state.totalArea);
 	draw_area(state.currentArea);
 	draw_fanSpeed(state.fanSpeed);
 	draw_speed(state.speed);
 	draw_wheel(state.wheelRotating);
-	draw_Seeder1Symbol(state.seederState1[0]);
-	draw_Seeder2Symbol(state.seederState2[0]);
-	draw_Seeder3Symbol(state.seederState3[0]);
-	draw_Seeder4Symbol(state.seederState4[0]);
+	draw_Seeder1Symbol(state.seederState1[0] || state.seederState1[1] || state.seederState1[2]);
+	draw_Seeder2Symbol(state.seederState2[0] || state.seederState2[1] || state.seederState2[2]);
+	draw_Seeder3Symbol(state.seederState3[0] || state.seederState3[1] || state.seederState3[2]);
+	draw_Seeder4Symbol(state.seederState4[0] || state.seederState4[1] || state.seederState4[2]);
 	draw_fanSymbol(state.fanRotating);
 }

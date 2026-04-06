@@ -27,7 +27,7 @@ void write_data(const uint8_t);
 void write_cmd(uint8_t);
 
 void display_init();
-void draw_state();
+void draw_state(State);
 void clear_display();
 void lock_display(bool);
 
