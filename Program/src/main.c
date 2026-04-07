@@ -7,27 +7,29 @@
 #include "persist.h"
 
 void alarm(bool alarm, bool alarm_silent){
+	static uint32_t loops_to_toggle = 0;
 	if(alarm){
-		GPIOB->ODR &= ~(GPIO_ODR_OD4);
-		GPIOB->ODR &= ~(GPIO_ODR_OD5);
-		if(!alarm_silent){
-			//GPIOB->ODR |= GPIO_ODR_OD6; //Activate alarm tone
-			GPIOB->ODR &= ~(GPIO_ODR_OD4);
+		GPIOB->ODR &= ~(GPIO_ODR_OD4); //Deactivate green LED
 
+		if(!alarm_silent){
+			GPIOB->ODR |= GPIO_ODR_OD6; //Activate alarm tone
+			GPIOB->ODR &= ~(GPIO_ODR_OD4);
 		}
 		else{
 			GPIOB->ODR &= ~(GPIO_ODR_OD6); //Deactivate alarm tone
-								GPIOB->ODR |= GPIO_ODR_OD4;
-
 		}
-		delay_ms(500);
-		GPIOB->ODR |= GPIO_ODR_OD5;
-		delay_ms(500);
+		
+		loops_to_toggle++;
+		if(loops_to_toggle == 120){
+			GPIOB->ODR ^= GPIO_ODR_OD5; //Toggle red LED
+			loops_to_toggle = 0;
+		}
+
 	}
 	else{
 		GPIOB->ODR &= ~(GPIO_ODR_OD6); //Deactivate alarm tone
-		GPIOB->ODR |= GPIO_ODR_OD4;
-		GPIOB->ODR &= ~(GPIO_ODR_OD5);
+		GPIOB->ODR |= GPIO_ODR_OD4; //Activate green LED
+		GPIOB->ODR &= ~(GPIO_ODR_OD5); //Deactivate red LED
 	}
 }
 
@@ -50,32 +52,38 @@ int main(){
 
 	State state_buffer;
 
+	uint32_t loops_button_pressed = 0;
+	bool button_pressed = false;
+	bool button_clear_done = false;
+	bool button_mute_done = false;
+
 	while(1){
 		update_state();
 		state_buffer = state_get_state();
 		draw_state(state_buffer);
 		alarm(state_buffer.alarm, state_buffer.alarm_silent);
 
-		if(!(GPIOA->IDR & GPIO_IDR_ID9) && !state_buffer.alarm){
-			delay_ms(1000);
-			if(!(GPIOA->IDR & GPIO_IDR_ID9) && !state_buffer.alarm){
-				state_clear_current_count();
-			}
-		}
-
-		if(!(GPIOA->IDR & GPIO_IDR_ID9) && state_buffer.alarm){
-			delay_ms(200);
-			if(!(GPIOA->IDR & GPIO_IDR_ID9) && state_buffer.alarm){
-				state_set_alarm_mute(true);
-			}
-		}
-
 		if(state_buffer.persist_needed){
 			persist_append(state_buffer.n_wheel, state_buffer.n_wheel_current);
 			state_reset_persist_needed();
 		}
 
-
+		button_pressed = !(GPIOA->IDR & GPIO_IDR_ID9);
+		if(button_pressed){
+			loops_button_pressed++;	
+			if(loops_button_pressed == 25 && state_buffer.alarm && !button_mute_done){
+				state_set_alarm_mute(true);
+				button_mute_done = true;
+			}
+			if(loops_button_pressed == 500 && !button_clear_done){
+				state_clear_current_count();
+				button_clear_done = true;
+			}
+		}else{
+			loops_button_pressed = 0;
+			button_clear_done = false;
+			button_mute_done = false;
+		}
 	}
 	return 0;	 	
 }

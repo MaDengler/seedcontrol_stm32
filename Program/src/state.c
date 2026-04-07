@@ -11,7 +11,7 @@
 #define WORKING_WIDTH 3.0
 #define T_RESET (2800 * MilliSECOND)
 
-State state = {0,0,0,0,{false,true,true},{false,true,true},{false,true,true},{false,true,true},false,false,false,false,false,3,0,0,0,0};
+State state;
 
 void EXTI0_IRQHandler(void){
     if(TIM3->CNT > 40*MilliSECOND || TIM3->CNT == 0){
@@ -153,8 +153,11 @@ void state_init(){
     NVIC_EnableIRQ(TIM4_IRQn);
 
     //Load persisted area from flash memory
-    state.n_wheel = persist_read_total_count();
-    state.n_wheel_current = persist_read_current_count();
+    state = (State){
+        .n_wheel = persist_read_total_count(),
+        .n_wheel_current = persist_read_current_count(),
+        .alarm_prevent = 3
+    };
 }
 
 void update_state(){
