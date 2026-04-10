@@ -18,6 +18,7 @@ typedef struct{
     bool persist_needed;
     bool alarm;
     bool alarm_silent;
+    bool alarm_silent_whole_cycle;
     uint32_t alarm_prevent;
 
 
@@ -34,7 +35,8 @@ void update_state();
 void state_reset_persist_needed();
 State state_get_state();
 void state_clear_current_count();
-void state_set_alarm_mute(bool);
+void state_set_alarm_silent();
+void state_set_alarm_silent_whole_cycle();
 
 
 #endif

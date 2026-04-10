@@ -213,10 +213,14 @@ void state_clear_current_count(){
     __enable_irq();
 }
 
-void state_set_alarm_mute(bool mute){
+void state_set_alarm_silent(){
     __disable_irq();
-    state.alarm_silent = mute;
+    state.alarm_silent = true;
     __enable_irq();
 }
 
-
+void state_set_alarm_silent_whole_cycle(){
+    __disable_irq();
+    state.alarm_silent_whole_cycle = true;
+    __enable_irq();
+}

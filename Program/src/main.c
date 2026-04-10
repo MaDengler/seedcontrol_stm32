@@ -6,17 +6,16 @@
 #include "state.h"
 #include "persist.h"
 
-void alarm(bool alarm, bool alarm_silent){
+void alarm(bool alarm, bool alarm_silent, bool alarm_silent_whole_cycle){
 	static uint32_t loops_to_toggle = 0;
 	if(alarm){
 		GPIOB->ODR &= ~(GPIO_ODR_OD4); //Deactivate green LED
 
-		if(!alarm_silent){
-			GPIOB->ODR |= GPIO_ODR_OD6; //Activate alarm tone
-			GPIOB->ODR &= ~(GPIO_ODR_OD4);
+		if(alarm_silent || alarm_silent_whole_cycle){
+			GPIOB->ODR &= ~(GPIO_ODR_OD6);//Deactivate alarm tone
 		}
 		else{
-			GPIOB->ODR &= ~(GPIO_ODR_OD6); //Deactivate alarm tone
+			GPIOB->ODR |= GPIO_ODR_OD6; //Activate alarm tone
 		}
 		
 		loops_to_toggle++;
@@ -56,12 +55,13 @@ int main(){
 	bool button_pressed = false;
 	bool button_clear_done = false;
 	bool button_mute_done = false;
+	bool button_mute_whole_cycle_done = false;
 
 	while(1){
 		update_state();
 		state_buffer = state_get_state();
 		draw_state(state_buffer);
-		alarm(state_buffer.alarm, state_buffer.alarm_silent);
+		alarm(state_buffer.alarm, state_buffer.alarm_silent, state_buffer.alarm_silent_whole_cycle);
 
 		if(state_buffer.persist_needed){
 			persist_append(state_buffer.n_wheel, state_buffer.n_wheel_current);
@@ -72,8 +72,25 @@ int main(){
 		if(button_pressed){
 			loops_button_pressed++;	
 			if(loops_button_pressed == 25 && state_buffer.alarm && !button_mute_done){
-				state_set_alarm_mute(true);
+				state_set_alarm_silent();
 				button_mute_done = true;
+			}
+			if(loops_button_pressed == 1500 && state_buffer.alarm && !button_mute_whole_cycle_done){
+				state_set_alarm_silent_whole_cycle();
+				button_mute_whole_cycle_done = true;
+				
+				GPIOB->ODR ^= GPIO_ODR_OD4; //Toggle green LED
+				GPIOB->ODR ^= GPIO_ODR_OD5; //Toggle red LED
+				delay_ms(500);
+				GPIOB->ODR ^= GPIO_ODR_OD4; //Toggle green LED
+				GPIOB->ODR ^= GPIO_ODR_OD5; //Toggle red LED
+				delay_ms(500);
+				GPIOB->ODR ^= GPIO_ODR_OD4; //Toggle green LED
+				GPIOB->ODR ^= GPIO_ODR_OD5; //Toggle red LED
+				delay_ms(500);				
+				GPIOB->ODR ^= GPIO_ODR_OD4; //Toggle green LED
+				GPIOB->ODR ^= GPIO_ODR_OD5; //Toggle red LED
+				delay_ms(500);
 			}
 			if(loops_button_pressed == 500 && !button_clear_done){
 				state_clear_current_count();
@@ -83,6 +100,7 @@ int main(){
 			loops_button_pressed = 0;
 			button_clear_done = false;
 			button_mute_done = false;
+			button_mute_whole_cycle_done = false;
 		}
 	}
 	return 0;	 	
